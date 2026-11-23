@@ -5,11 +5,14 @@ import mediapipe as mp
 window_name = "SitSmart"
 CAMERA_INDEX = 0
 
-video = cv.VideoCapture(CAMERA_INDEX)
+video = cv.VideoCapture(CAMERA_INDEX, cv.CAP_DSHOW)
 
 if not video.isOpened():
     print("can't open camera")
     exit(1)
+
+video.set(cv.CAP_PROP_FRAME_WIDTH, 640)
+video.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
 
 WIDTH = int(video.get(cv.CAP_PROP_FRAME_WIDTH))
 HEIGHT = int(video.get(cv.CAP_PROP_FRAME_HEIGHT))
@@ -30,8 +33,9 @@ NOSE = 0
 LEFT_SHOULDER = 11
 RIGHT_SHOULDER = 12
 
-LEFT_EYE = [362, 385, 387]
-RIGHT_EYE = [33, 160, 133, 153, 144]
+LEFT_EYE = [362, 385, 387, 263, 373, 380]
+RIGHT_EYE = [33, 160, 158, 133, 153, 144]
+
 
 cv.namedWindow(window_name, cv.WINDOW_NORMAL)
 
@@ -40,7 +44,6 @@ while True:
     if not ret:
         break
 
-    frame = cv.flip(frame, 1)
 
     rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     pose_result = pose_model.process(rgb)
