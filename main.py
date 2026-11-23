@@ -1,5 +1,7 @@
 import cv2 as cv
 import mediapipe as mp
+import math
+import time
 
 
 window_name = "SitSmart"
@@ -36,6 +38,27 @@ RIGHT_SHOULDER = 12
 LEFT_EYE = [362, 385, 387, 263, 373, 380]
 RIGHT_EYE = [33, 160, 158, 133, 153, 144]
 
+SHOW_DEBUG = True
+EAR_THRESHOLD = 0.21
+
+
+
+blink_count = 0
+eye_closed = False
+close_start = 0
+blink_times = []
+
+def distance(p1, p2):
+    return math.hypot(p1.x - p2.x, p1.y - p2.y)
+
+def eye_ratio(face, idx):
+    p1, p2, p3, p4 , p5, p6 = [face[i] for i in idx]
+    vertical = distance(p2, p6) + distance(p3, p5)
+    horizontal = distance(p1, p4)
+    return vertical / (2 * horizontal)
+
+
+
 
 cv.namedWindow(window_name, cv.WINDOW_NORMAL)
 
@@ -43,6 +66,7 @@ while True:
     ret, frame = video.read()
     if not ret:
         break
+
 
 
     rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -66,10 +90,33 @@ while True:
     if face_results.multi_face_landmarks:
         face = face_results.multi_face_landmarks[0].landmark
 
+        ear = (eye_ratio(face, LEFT_EYE) + eye_ratio(face, RIGHT_EYE)) / 2
+        now = time.time()
+
+        if ear < EAR_THRESHOLD:
+            if not eye_closed:
+                eye_closed = True
+                close_start = now
+
+        else:
+            if eye_closed:
+                eye_closed = False
+                if now - close_start < 1.0:
+                    blink_times.append(now)
+
+        blink_times = [t for t in blink_times if now - t <= 60]
+
+        cv.putText(frame, f"EAR: {ear:.2f}", (10, 30),
+                    cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        cv.putText(frame, f"Blinks/min: {len(blink_times)}", (10, 60),
+                    cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+
+
         for i in LEFT_EYE + RIGHT_EYE:
             x = int(face[i].x * WIDTH)
             y = int(face[i].y * HEIGHT)
-            cv.circle(frame, (x, y), 2, (30, 30, 230), -1)
+            if SHOW_DEBUG:
+                cv.circle(frame, (x,y), 2, (30, 30, 230), -1)
 
     cv.imshow(window_name, frame)
 
