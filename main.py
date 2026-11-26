@@ -31,6 +31,15 @@ face_model = mp.solutions.face_mesh.FaceMesh(
     min_tracking_confidence=0.6
 )
 
+KAM_PELK = 10
+ZIAD_PELK = 25
+TOOL_BASTE = 0.5
+START_TIME = time.time()
+GARM_SHODAN = 60
+FASELE_HOSHDAR = 120
+last_alert = 0
+alert_until = 0
+
 NOSE = 0
 LEFT_SHOULDER = 11
 RIGHT_SHOULDER = 12
@@ -39,14 +48,14 @@ LEFT_EYE = [362, 385, 387, 263, 373, 380]
 RIGHT_EYE = [33, 160, 158, 133, 153, 144]
 
 SHOW_DEBUG = True
-EAR_THRESHOLD = 0.21
+ASTANE_EAR = 0.21
 
 
 
 blink_count = 0
-eye_closed = False
-close_start = 0
-blink_times = []
+CHESHM_BASTE = False
+SHOROE_BASTE = 0
+PELK_HA = []
 
 def distance(p1, p2):
     return math.hypot(p1.x - p2.x, p1.y - p2.y)
@@ -93,23 +102,39 @@ while True:
         ear = (eye_ratio(face, LEFT_EYE) + eye_ratio(face, RIGHT_EYE)) / 2
         now = time.time()
 
-        if ear < EAR_THRESHOLD:
-            if not eye_closed:
-                eye_closed = True
-                close_start = now
+        if ear < ASTANE_EAR:
+            if not CHESHM_BASTE:
+                CHESHM_BASTE = True
+                SHOROE_BASTE = now
 
         else:
-            if eye_closed:
-                eye_closed = False
-                if now - close_start < 1.0:
-                    blink_times.append(now)
+            if CHESHM_BASTE:
+                CHESHM_BASTE = False
+                if now - SHOROE_BASTE < 1.0:
+                    PELK_HA.append(now)
 
-        blink_times = [t for t in blink_times if now - t <= 60]
+        PELK_HA = [t for t in PELK_HA if now - t <= 60]
 
         cv.putText(frame, f"EAR: {ear:.2f}", (10, 30),
                     cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-        cv.putText(frame, f"Blinks/min: {len(blink_times)}", (10, 60),
+        cv.putText(frame, f"Blinks/min: {len(PELK_HA)}", (10, 60),
                     cv.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                
+        closed_for = now - SHOROE_BASTE if CHESHM_BASTE else 0
+
+        KHASTE = (
+            closed_for > TOOL_BASTE
+            or (now - START_TIME > GARM_SHODAN
+                and (len(PELK_HA) < KAM_PELK or len(PELK_HA) > ZIAD_PELK))
+        )
+
+        if KHASTE and now - last_alert > FASELE_HOSHDAR:
+            last_alert = now
+            alert_until = now + 5
+
+        if now < alert_until:
+            cv.putText(frame, "Your eyes are tired! take Break" ,
+                       (10, 100), cv.FONT_HERSHEY_SIMPLEX, 0.8 , (0, 0, 255), 2)
 
 
         for i in LEFT_EYE + RIGHT_EYE:
